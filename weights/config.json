@@ -1,0 +1,16 @@
+{
+  "architecture": {
+    "n_max": 5,
+    "m_max": 5,
+    "d_b": 64,
+    "d": 128,
+    "layers": 8,
+    "heads": 4,
+    "max_len": 512
+  },
+  "training": {
+    "data": "reduced random circuits of depth <= 2, all shapes n in 2..5, m in 1..5, 1M circuits per shape",
+    "optimizer": "AdamW lr 1e-4, batch 64, linear warmup (1 epoch) + cosine decay, 2 epochs"
+  },
+  "parameters": 2198016
+}
