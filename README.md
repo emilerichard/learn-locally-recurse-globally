@@ -26,7 +26,9 @@ llrg/
   viz.py       truth-table plots
 weights/       model.pt (state dict) and config.json
 samples/       samples.json: test circuits (shallow and deep) with their truth tables
-notebooks/     demo.ipynb
+assets/        figures used by the notebooks
+notebooks/     00_basics.ipynb (circuits, truth tables, tokens; model architecture)
+               demo.ipynb (one-shot inference and the outer loop on test circuits)
 ```
 
 ## Quick start
@@ -34,7 +36,7 @@ notebooks/     demo.ipynb
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-jupyter notebook notebooks/demo.ipynb
+jupyter notebook notebooks/00_basics.ipynb   # then notebooks/demo.ipynb
 ```
 
 Or from Python:
