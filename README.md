@@ -31,14 +31,14 @@ is cardinality. A projection onto a bound set is any map `π : X → Z` with fib
 | Remark `rm_floor` (i)–(ii): every correction `x ↦ g(x|_S)` is an `|S|`-junta; `RM(k,n)` is exactly the set of XORs of `k`-juntas; residual weight ≥ `d(R_0, RM(k,n))` for any selector and budget | `proj_junta`, `junta_mem_RM`, `RM_add`, `RM_is_sum_of_juntas`, `mono_junta`, `residual_floor` | `JuntaFloor.lean` |
 | App. H: generator classes `G_q`; nesting; `m`-output count `|G_q|^m`; Shannon step; `G_3(4) = all ⇒ G_5(5) = all` | `G`, `G_mono`, `card_multi_output_G`, `shannon_step`, `G_embed`, `all_G5_of_all_G3` | `DepthClasses.lean` |
 | App. H, computed sizes: `|G_2(3)| = 133`, `|G_2(4)| = 1078`, `G_3(4)` = all `2^16` functions, every function of 5 inputs in `G_5(5)` | `card_G2_3`, `card_G2_4`, `all_G3_4`, `all_G5_5` (bitmaps computed by the kernel, `decide +kernel`, and related to `G` by `G1_iff`, `G2_iff`, `card_of_spec`; `G_3(4)`: a certificate of one depth-3 witness per truth table, produced outside Lean, checked by the kernel in `G3Cert.lean`) | `ClassCount.lean`, `G3Cert.lean`, `G3Sound.lean` |
+| App. Dyck, Thm. `th:dyck_informal` (one causal uniform-attention head, tokens `±1`, `P(next = '(') = σ(2X_r)`, `X_r = (v/r) Σ_{i<r}(E(z_i) + B_i)`): telescoping `Σ (E(z_i)+B_i) = Δ_r(z) − Δ_r(s) + γ E(s_{r+1})`; memorization (`vγ > N²`: every non-empty prefix of `s` completed into `s` w.p. ≥ `1 − 2N e^{−N}`; cross-entropy ≤ `2N e^{−N}`); generalization by contraction (`γ = −1/2`, `−v > 2N²`: every non-empty valid prefix completed into a Dyck word w.p. ≥ `1 − 2N e^{−N}`, via a specific completion that agrees with the prefix); failure (`0 < γ < 2`, `vγ > N²`, stack sizes differ: an invalid completion w.p. ≥ `1 − 2N e^{−N(2−γ)/γ}`) | `S_eq`, `memorization`, `memorization_loss`, `generalization`, `comp_isDyck`, `failure` | `Dyck.lean` |
 
 Not formalized (computational or out of scope):
 - the size `|G_2(5)| = 15025` and the lower bound on `|G_3(5)|` (computed by closure, cross-checked
   against the corpora); the other entries of Table `tab:class_single` (`|G_1(n)| = 7, 17, 32, 65`,
   `|G_2(2)| = |G_3(2)| = 16`, `|G_3(3)| = 256`) and the corpus statistics of Table `tab:class_multi`
   and of the Validation paragraph (empirical);
-- the asymptotic part of Remark `rm_floor`; the Fourier form of App. F; the Dyck completion
-  theorem; the remarks on the parity marginal after Thm. `dichotomy`;
+- the asymptotic part of Remark `rm_floor`; the Fourier form of App. F; the remarks on the parity marginal after Thm. `dichotomy`;
 - the closed-form size `L` of App. B itself: the guarantees hold for any completion cost `L` and any
   circuit sizes, so they apply to it; the correspondence between a circuit and the cells it sets
   (a synthesized circuit reproduces its sub-table exactly) is the modelling assumption of the loops;
@@ -62,4 +62,9 @@ Findings while formalizing:
    under complementation suffices. The paper now states it this way.
 6. Prop. `convergence_rate`: the expected number of iterations is at most
    `⌈log(m 2^n)/log(1/(2ε₀))⌉ + 1/(1−2ε₀)`; the paper's `O(·)` hid the second term.
+7. Thm. `th:dyck_informal`: memorization and generalization hold with the stated constants
+   (`vγ > N²`, `−v > 2N²`) for non-empty prefixes (with an empty prefix the logit is `v/0`). The
+   failure statement needs `0 < γ < 2` (for `γ ≥ 2` the model can close a stack gap of 2); it then
+   holds with probability at least `1 − 2N e^{−N(2−γ)/γ}`. The probability bounds are for one
+   explicit completion (valid, resp. invalid), hence lower bounds for the event.
 
