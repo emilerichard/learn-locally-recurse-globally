@@ -9,3 +9,8 @@ import LlrgLean.StridedPE
 import LlrgLean.ReedMuller
 import LlrgLean.JuntaFloor
 import LlrgLean.DepthClasses
+import LlrgLean.ZeroDrift
+import LlrgLean.Convergence
+import LlrgLean.ClassCount
+import LlrgLean.G3Cert
+import LlrgLean.G3Sound

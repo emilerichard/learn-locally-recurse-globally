@@ -2,7 +2,7 @@
 
 Lean 4 / Mathlib formalization of the mathematical claims of *Learn Locally, Recurse Globally:
 Neural Circuit Synthesis Beyond Training Depth*. Toolchain `leanprover/lean4:v4.34.1`, Mathlib
-`v4.34.1`. Build: `lake exe cache get && lake build`. No `sorry`, no `native_decide`; every theorem
+`v4.34.1`. Build: `lake exe cache get && lake build`. No `sorry`, no `native_decide` (finite computations use `decide +kernel`, checked by the kernel); every theorem
 below depends only on the axioms `propext`, `Classical.choice`, `Quot.sound` (`#print axioms`).
 
 Modelling: truth tables are finite sets of cells (`Finset`) — the cells equal to 1 — over an
@@ -19,6 +19,8 @@ is cardinality. A projection onto a bound set is any map `π : X → Z` with fib
 | Alg. 2 with the majority operator: the multi-column majority correction touches only non-zero residual columns, so the guarantee holds for any proposer of majority corrections | `majCorr`, `majCorr_touched`, `project_le_fallback_maj` (single column: `nonempty_of_majSet_nonempty`) | `SizeTest.lean`, `Marginals.lean` |
 | App. B: flipping fibers changes the weight by `Σ (F − 2W_z)`; `Δw_par`; `Δw_maj = −Σ max(2W_z − F, 0)`; the majority marginal is the weight-minimizing correction for a fixed bound set | `card_flip`, `delta_par`, `card_after_maj`, `gain_eq_sum_max`, `maj_optimal` | `Marginals.lean` |
 | Prop. `zero_drift` (ii): even fiber weights ⇒ parity marginal is a no-op | `par_noop` | `Marginals.lean` |
+| Prop. `zero_drift` (i): for a bound set chosen independently of `R` with `k < n` (fibers of even size), and a distribution of `R` invariant under complementation (in particular uniform), `E[Δw_par] = 0` | `zero_drift`, `zero_drift_uniform`, `dPar_compl` | `ZeroDrift.lean` |
+| Prop. `convergence_rate`: (C1)–(C2) ⇒ `E[w_{t+1}] ≤ 2ε₀ w_t`; `E[w_t] ≤ (2ε₀)^t w_0`; Markov `P(w_t ≠ 0) ≤ E[w_t]`; expected number of iterations with non-zero residual ≤ `⌈log(m 2^n)/log(1/(2ε₀))⌉ + 1/(1−2ε₀)` (any horizon) | `one_step`, `iterate_contraction`, `prob_ne_zero_le`, `tail_sum`, `expected_iterations` | `Convergence.lean` |
 | Prop. `gain` and its proof: `gain = w − 2^{n−1}(1−β_S)`; `δ' = (1−β_S)/2`; progress iff `β_S > 1−2δ`; max gain ⇔ max `β`; `β_S ∈ [0,1]`; `β_S = 1` iff `R` is an `S`-junta; `|Z|·F = 2^n` | `two_gain`, `card_after_maj_beta`, `progress_iff`, `gain_le_iff`, `betaSum_bounds`, `betaSum_eq_iff`, `card_Z_mul_F` (integer forms: `betaSum = 2^n β_S`) | `Marginals.lean` |
 | Thm. `dichotomy` (a): weight ≤ F/2 ⇒ no progress; a minterm is a fixed point | `no_progress_of_small`, `minterm_fixed` | `Reachability.lean` |
 | Thm. `dichotomy` (b), one step, both cases and the balanced case (**corrected gain for μ > 1/2**) | `block_step_lt`, `block_step_gt`, `block_step_eq` | `Reachability.lean` |
@@ -28,20 +30,20 @@ is cardinality. A projection onto a bound set is any map `π : X → Z` with fib
 | §2.2: Reed–Muller expansion exists, is unique, coefficient `a_S = ⊕_{T⊆S} f(1_T)` | `reed_muller`, `rmCoef_rmEval`, `rmEval_rmCoef` | `ReedMuller.lean` |
 | Remark `rm_floor` (i)–(ii): every correction `x ↦ g(x|_S)` is an `|S|`-junta; `RM(k,n)` is exactly the set of XORs of `k`-juntas; residual weight ≥ `d(R_0, RM(k,n))` for any selector and budget | `proj_junta`, `junta_mem_RM`, `RM_add`, `RM_is_sum_of_juntas`, `mono_junta`, `residual_floor` | `JuntaFloor.lean` |
 | App. H: generator classes `G_q`; nesting; `m`-output count `|G_q|^m`; Shannon step; `G_3(4) = all ⇒ G_5(5) = all` | `G`, `G_mono`, `card_multi_output_G`, `shannon_step`, `G_embed`, `all_G5_of_all_G3` | `DepthClasses.lean` |
+| App. H, computed sizes: `|G_2(3)| = 133`, `|G_2(4)| = 1078`, `G_3(4)` = all `2^16` functions, every function of 5 inputs in `G_5(5)` | `card_G2_3`, `card_G2_4`, `all_G3_4`, `all_G5_5` (bitmaps computed by the kernel, `decide +kernel`, and related to `G` by `G1_iff`, `G2_iff`, `card_of_spec`; `G_3(4)`: a certificate of one depth-3 witness per truth table, produced outside Lean, checked by the kernel in `G3Cert.lean`) | `ClassCount.lean`, `G3Cert.lean`, `G3Sound.lean` |
 
 Not formalized (computational or out of scope):
-- the class sizes `|G_2(4)| = 1078`, `|G_3(4)| = 2^16`, `|G_2(5)| = 15025` and the lower bound on
-  `|G_3(5)|` (computed by closure, cross-checked against the corpora; `all_G5_of_all_G3` takes
-  `G_3(4) = all` as a hypothesis);
-- Prop. `zero_drift` (i) and Prop. `convergence_rate` (probabilistic); the asymptotic part of
-  Remark `rm_floor`; the Fourier form of App. F; the Dyck completion theorem; the remarks on the
-  parity marginal after Thm. `dichotomy`;
+- the size `|G_2(5)| = 15025` and the lower bound on `|G_3(5)|` (computed by closure, cross-checked
+  against the corpora);
+- the asymptotic part of Remark `rm_floor`; the Fourier form of App. F; the Dyck completion
+  theorem; the remarks on the parity marginal after Thm. `dichotomy`;
 - the closed-form size `L` of App. B itself: the guarantees hold for any completion cost `L` and any
   circuit sizes, so they apply to it; the correspondence between a circuit and the cells it sets
   (a synthesized circuit reproduces its sub-table exactly) is the modelling assumption of the loops;
 - the composition of loop and completion into a single circuit object: outputs are stated on cell
   sets (`refine_exact`, `project_exact`) and the SOP of a set of rows is its indicator
-  (`sop_eq_indicator`).
+  (`sop_eq_indicator`);
+- (C1)–(C2) of Prop. `convergence_rate` are hypotheses about the model, taken as assumptions.
 
 Findings while formalizing:
 1. Thm. `dichotomy` (b): for `μ_j > 1/2` the flipped fibers are those with `g_j = 0`, so the gain is
@@ -52,3 +54,10 @@ Findings while formalizing:
 3. Prop. 2.1 is stated in the paper as "reaches zero within `‖g‖₁ ≤ m·2^n` steps" (formerly "at most
    `m·2^n` steps suffice").
 4. The strided index uses the maximal number of outputs `m_max` as stride.
+5. Prop. `zero_drift` (i) holds for a bound set chosen independently of the residual; it fails for
+   adaptive selectors (greedy choice among the 6 bound sets at `n = 4`, `k = 2`, uniform `R`:
+   `E[Δw_par] ≈ −1.97`). The condition "exactly when `R` is uniform" was too strong; invariance
+   under complementation suffices. The paper now states it this way.
+6. Prop. `convergence_rate`: the expected number of iterations is at most
+   `⌈log(m 2^n)/log(1/(2ε₀))⌉ + 1/(1−2ε₀)`; the paper's `O(·)` hid the second term.
+
