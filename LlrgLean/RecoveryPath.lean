@@ -96,7 +96,8 @@ lemma card_rows (t : ℕ) : Fintype.card (Rows A t) = Fintype.card A ^ t := by
     show Fintype.card (A × Rows A t) = _
     rw [Fintype.card_prod, ih, pow_succ, mul_comm]
 
-/-- Projection onto block `d` (block `0` is the outermost). -/
+/-- Projection onto block `d`. Block `0` is the outermost, which carries `gs (t − 1)` in `blockXor`:
+the paper's `B_1, B_2, …` are Lean's blocks `0, 1, …`, i.e. `gs (t−1), gs (t−2), …`. -/
 def coord : (t : ℕ) → Fin t → Rows A t → A
   | t + 1, ⟨0, _⟩ => fun x => x.1
   | t + 1, ⟨d + 1, h⟩ => fun x => coord t ⟨d, by omega⟩ x.2
