@@ -427,6 +427,57 @@ theorem failure (s z : ℕ → Bool) (γ v : ℝ) (N r₀ : ℕ) (hγ0 : 0 < γ)
       nlinarith [mul_le_mul_of_nonneg_right h3 h2γ.le]
     linarith
 
+/-- For every `γ > 0`, the sign-following token never reduces a stack gap of at least 2 (a
+reduction would need `z` to move against `s` toward it, where the logit has the sign of the gap). -/
+lemma gap_step_all (γ : ℝ) (hγ0 : 0 < γ) (a b : ℤ) (e : Bool) (hg : 2 ≤ |a - b|) :
+    2 ≤ |(a + (if ruleP γ a b e then 1 else -1)) - (b + (if e then 1 else -1))| := by
+  rcases le_abs'.mp hg with h | h
+  · have hr : (a : ℝ) - b ≤ -2 := by exact_mod_cast (by omega : a - b ≤ -2)
+    cases e
+    · -- `s` closes: the logit `a − b − γ < 0`, so `z` closes and the gap is unchanged
+      have hneg : ¬ (0 : ℝ) < (a : ℝ) - b + γ * E false := by simp [E]; linarith
+      simp only [ruleP, hneg, decide_false, Bool.false_eq_true, ite_false]
+      rw [le_abs']; left; omega
+    · -- `s` opens: `z` opens (gap unchanged) or closes (gap grows)
+      by_cases hz : ruleP γ a b true <;> simp only [hz, if_true, Bool.false_eq_true, if_false] <;>
+        rw [le_abs'] <;> left <;> omega
+  · have hr : (2 : ℝ) ≤ (a : ℝ) - b := by exact_mod_cast h
+    cases e
+    · by_cases hz : ruleP γ a b false <;> simp only [hz, if_true, Bool.false_eq_true, if_false] <;>
+        rw [le_abs'] <;> right <;> omega
+    · -- `s` opens: the logit `a − b + γ > 0`, so `z` opens and the gap is unchanged
+      have hpos : (0 : ℝ) < (a : ℝ) - b + γ * E true := by simp [E]; linarith
+      simp only [ruleP, hpos, decide_true, if_true]
+      rw [le_abs']; right; omega
+
+/-- Theorem `th:dyck_informal`, failure under positive `γ`, deterministic part, for every `γ > 0`:
+if the prefix's stack size differs from `s`'s, the sign-following completion is never a Dyck
+word (its stack gap to `s` never drops below 2). The probability bound is `failure` (`0 < γ < 2`). -/
+theorem failure_det (s z : ℕ → Bool) (γ : ℝ) (N r₀ : ℕ) (hγ0 : 0 < γ) (hr : r₀ ≤ 2 * N)
+    (hs : D s (2 * N) = 0) (hdiff : D z r₀ ≠ D s r₀) :
+    ¬ IsDyck (2 * N) (compP γ s z r₀) ∧ (∀ t < r₀, compP γ s z r₀ t = z t) := by
+  have hpar0 : Even (D z r₀ - D s r₀) := by
+    have := (D_parity z r₀).sub (D_parity s r₀)
+    rwa [show D z r₀ - ↑r₀ - (D s r₀ - ↑r₀) = D z r₀ - D s r₀ by ring] at this
+  have hgap : ∀ k, 2 ≤ |D (compP γ s z r₀) (r₀ + k) - D s (r₀ + k)| := by
+    intro k
+    induction k with
+    | zero =>
+      rw [Nat.add_zero, D_compP_prefix γ s z r₀ r₀ le_rfl]
+      obtain ⟨m, hm⟩ := hpar0
+      have : D z r₀ - D s r₀ ≠ 0 := sub_ne_zero.mpr hdiff
+      rw [le_abs']; omega
+    | succ k ih =>
+      have hct : compP γ s z r₀ (r₀ + k)
+          = ruleP γ (D (compP γ s z r₀) (r₀ + k)) (D s (r₀ + k)) (s (r₀ + k)) := by
+        simp [compP, D_compP]
+      rw [show r₀ + (k + 1) = r₀ + k + 1 by omega, D_succ, D_succ, hct]
+      exact gap_step_all γ hγ0 _ _ _ ih
+  refine ⟨fun hd => ?_, fun t ht => by simp [compP, ht]⟩
+  have := hgap (2 * N - r₀)
+  rw [show r₀ + (2 * N - r₀) = 2 * N by omega, hd.2, hs] at this
+  norm_num at this
+
 /-! ### Cross-entropy of the memorization regime -/
 
 lemma neg_log_σ_le (t : ℝ) : -Real.log (σ t) ≤ exp (-t) := by
