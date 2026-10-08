@@ -2,8 +2,9 @@
 Theorem `dichotomy` (b), full statement: an XOR of blocks on disjoint inputs is recovered by the
 majority loop in exactly one step per block, provided no remainder is exactly balanced.
 
-`RecovIn R k`: the residual `R` reaches zero after exactly `k` majority steps, each on some bound
-set (a projection with fibers of uniform size).
+Rows are `t` blocks `A × (A × ⋯ × Unit)` (each block = the `k` inputs of one `B_j`), optionally
+times extra inputs `E` that the target ignores (`n > tk`). The run is explicit: step `d` is the
+majority step on the projection onto block `d`, whose fibers have size `|A|^{t−1}` (`· |E|`).
 -/
 import LlrgLean.Reachability
 
@@ -17,11 +18,6 @@ namespace Llrg
 /-- One majority step on bound set `π` with fiber size `F`. -/
 def majStep {Y Z : Type*} [Fintype Y] [DecidableEq Y] [Fintype Z] [DecidableEq Z]
     (π : Y → Z) (F : ℕ) (R : Finset Y) : Finset Y := R ∆ overSet π (majSet π F R)
-
-inductive RecovIn {Y : Type} [Fintype Y] [DecidableEq Y] : Finset Y → ℕ → Prop
-  | zero : RecovIn ∅ 0
-  | step {Z : Type} [Fintype Z] [DecidableEq Z] (π : Y → Z) (F : ℕ) (hF : UniformFibers π F)
-      (R : Finset Y) (k : ℕ) (h : RecovIn (majStep π F R) k) : RecovIn R (k + 1)
 
 section Lift
 variable {A Y Z : Type} [Fintype A] [DecidableEq A] [Fintype Y] [DecidableEq Y]
@@ -58,15 +54,6 @@ lemma majStep_lift (hA : 0 < Fintype.card A) (π : Y → Z) (F : ℕ) (R : Finse
   unfold majStep; rw [majSet_lift hA]
   ext p; simp [overSet, Finset.mem_symmDiff, mem_product]
 
-/-- Lifting: a recovery path for `R` on `Y` is a recovery path of the same length for `A × R`. -/
-theorem recov_lift (hA : 0 < Fintype.card A) {R : Finset Y} {k : ℕ} (h : RecovIn R k) :
-    RecovIn ((univ : Finset A) ×ˢ R) k := by
-  induction h with
-  | zero => simpa using (RecovIn.zero : RecovIn (∅ : Finset (A × Y)) 0)
-  | @step Z' _ _ π F hF R k _ ih =>
-    refine RecovIn.step (fun p : A × Y => π p.2) (Fintype.card A * F) (uniform_lift π F hF) _ k ?_
-    rw [majStep_lift hA]; exact ih
-
 end Lift
 
 section Blocks
@@ -82,40 +69,13 @@ lemma compl_xorTarget (g : Finset A) (h : Finset Y) :
 lemma card_compl (h : Finset Y) : (univ \ h).card = Fintype.card Y - h.card := by
   rw [card_sdiff_of_subset (subset_univ h), card_univ]
 
-/-- One block: if the remainder is not exactly balanced and its low-density version `sel h` is
-recovered in `k` steps, then `g(a) ⊕ h(y)` is recovered in `k + 1` steps, the first on the block. -/
-theorem recov_block (hA : 0 < Fintype.card A) (g : Finset A) (h : Finset Y) (k : ℕ)
-    (hb : 2 * h.card ≠ Fintype.card Y) (hr : RecovIn (sel h) k) :
-    RecovIn (xorTarget g h) (k + 1) := by
-  refine RecovIn.step Prod.fst (Fintype.card Y) uniform_fst _ k ?_
-  unfold majStep
-  rcases lt_or_gt_of_ne hb with hlt | hgt
-  · rw [(block_step_lt g h hlt).1, (block_step_lt g h hlt).2.1]
-    simpa [sel, hlt] using recov_lift hA hr
-  · rw [(block_step_gt g h hgt).1, (block_step_gt g h hgt).2.1]
-    simpa [sel, show ¬ 2 * h.card < Fintype.card Y by omega] using recov_lift hA hr
-
-/-- The complement is recovered in the same number of steps (its low-density version is the same). -/
-theorem recov_block_compl (hA : 0 < Fintype.card A) (g : Finset A) (h : Finset Y) (k : ℕ)
-    (hb : 2 * h.card ≠ Fintype.card Y) (hr : RecovIn (sel h) k) :
-    RecovIn (univ \ xorTarget g h) (k + 1) := by
-  rw [compl_xorTarget]
-  have hle := card_le_univ h
-  have hb' : 2 * (univ \ h).card ≠ Fintype.card Y := by rw [card_compl]; omega
-  refine recov_block hA g (univ \ h) k hb' ?_
-  have hsel : sel (univ \ h) = sel h := by
-    unfold sel; rw [card_compl]
-    rcases lt_or_gt_of_ne hb with hlt | hgt
-    · rw [if_neg (by omega), if_pos hlt]; ext y; simp
-    · rw [if_pos (by omega), if_neg (by omega)]
-  rw [hsel]; exact hr
 
 end Blocks
 
 /-! ### Iterated blocks: rows `A × (A × (⋯ × Unit))`. -/
 
 /-- Rows of `t` blocks of type `A`. -/
-def Rows (A : Type) : ℕ → Type
+@[reducible] def Rows (A : Type) : ℕ → Type
   | 0 => Unit
   | t + 1 => A × Rows A t
 
@@ -128,6 +88,63 @@ instance instDecEqRows (A : Type) [DecidableEq A] : (t : ℕ) → DecidableEq (R
   | t + 1 => @instDecidableEqProd A (Rows A t) _ (instDecEqRows A t)
 
 variable {A : Type} [Fintype A] [DecidableEq A]
+
+lemma card_rows (t : ℕ) : Fintype.card (Rows A t) = Fintype.card A ^ t := by
+  induction t with
+  | zero => exact Fintype.card_unit
+  | succ t ih =>
+    show Fintype.card (A × Rows A t) = _
+    rw [Fintype.card_prod, ih, pow_succ, mul_comm]
+
+/-- Projection onto block `d` (block `0` is the outermost). -/
+def coord : (t : ℕ) → Fin t → Rows A t → A
+  | t + 1, ⟨0, _⟩ => fun x => x.1
+  | t + 1, ⟨d + 1, h⟩ => fun x => coord t ⟨d, by omega⟩ x.2
+
+/-- The run of Theorem `dichotomy` (b): starting at block `d`, apply at most `k` majority steps, the
+step on block `d` using the projection `coord t d` with fiber size `|A|^{t−1}`, then block `d+1`, … -/
+def runSteps (t : ℕ) : ℕ → ℕ → Finset (Rows A t) → Finset (Rows A t)
+  | _, 0, R => R
+  | d, k + 1, R =>
+    if h : d < t then runSteps t (d + 1) k (majStep (coord t ⟨d, h⟩) (Fintype.card A ^ (t - 1)) R)
+    else R
+
+/-- The projection onto a block has fibers of size `|A|^{t−1}`. -/
+lemma uniform_coord : ∀ (t : ℕ) (d : Fin t), UniformFibers (coord (A := A) t d) (Fintype.card A ^ (t - 1))
+  | t + 1, ⟨0, h⟩ => by
+    have := uniform_fst (A := A) (B := Rows A t)
+    rw [card_rows] at this; exact this
+  | t + 1, ⟨d + 1, h⟩ => by
+    have ih := uniform_coord t ⟨d, by omega⟩
+    have := uniform_lift (A := A) (coord t ⟨d, by omega⟩) _ ih
+    have ht : 1 ≤ t := by omega
+    rw [show Fintype.card A * Fintype.card A ^ (t - 1) = Fintype.card A ^ t by
+      rw [← pow_succ']; congr 1; omega] at this
+    exact this
+
+/-- Steps on inner blocks act on `A × R` as on `R`. -/
+lemma runSteps_lift (hA : 0 < Fintype.card A) (t : ℕ) :
+    ∀ (k d : ℕ) (R : Finset (Rows A t)),
+      runSteps (t + 1) (d + 1) k ((univ : Finset A) ×ˢ R) = (univ : Finset A) ×ˢ runSteps t d k R
+  | 0, d, R => rfl
+  | k + 1, d, R => by
+    by_cases h : d < t
+    · have e1 : runSteps (A := A) (t + 1) (d + 1) (k + 1) ((univ : Finset A) ×ˢ R)
+          = runSteps (t + 1) (d + 2) k (majStep (coord (t + 1) ⟨d + 1, by omega⟩)
+              (Fintype.card A ^ (t + 1 - 1)) ((univ : Finset A) ×ˢ R)) := by
+        rw [runSteps, dif_pos (by omega)]
+      have e2 : runSteps (A := A) t d (k + 1) R
+          = runSteps t (d + 1) k (majStep (coord t ⟨d, h⟩) (Fintype.card A ^ (t - 1)) R) := by
+        rw [runSteps, dif_pos h]
+      have hc : coord (A := A) (t + 1) ⟨d + 1, by omega⟩ = fun p => coord t ⟨d, h⟩ p.2 := rfl
+      have hpow : Fintype.card A ^ (t + 1 - 1) = Fintype.card A * Fintype.card A ^ (t - 1) := by
+        rw [← pow_succ']; congr 1; omega
+      rw [e1, e2, hc, hpow, majStep_lift hA]
+      exact runSteps_lift hA t k (d + 1) _
+    · have e1 : runSteps (A := A) (t + 1) (d + 1) (k + 1) ((univ : Finset A) ×ˢ R)
+          = (univ : Finset A) ×ˢ R := by rw [runSteps, dif_neg (by omega)]
+      have e2 : runSteps (A := A) t d (k + 1) R = R := by rw [runSteps, dif_neg h]
+      rw [e1, e2]
 
 /-- `blockXor gs c t = g_{t−1}(a_{t−1}) ⊕ ⋯ ⊕ g_0(a_0) ⊕ c`, blocks on disjoint inputs. -/
 def blockXor (gs : ℕ → Finset A) (c : Bool) : (t : ℕ) → Finset (Rows A t)
@@ -148,27 +165,92 @@ lemma sel_blockXor_zero (gs : ℕ → Finset A) (c : Bool) : sel (blockXor gs c 
     rw [if_neg (by norm_num)]
     exact Finset.sdiff_self _
 
-/-- Low-density remainders of a block XOR are recovered in one step per block. -/
-theorem recov_sel_blockXor (hA : 0 < Fintype.card A) (gs : ℕ → Finset A) (c : Bool) :
-    ∀ t, Unbalanced gs c t → RecovIn (sel (blockXor gs c t)) t := by
-  intro t
-  induction t with
-  | zero => intro _; rw [sel_blockXor_zero]; exact RecovIn.zero
-  | succ t ih =>
-    intro hu
-    have hin : RecovIn (sel (blockXor gs c t)) t := ih (fun j hj => hu j (Nat.lt_succ_of_lt hj))
-    have hb : 2 * (blockXor gs c t).card ≠ Fintype.card (Rows A t) := hu t (Nat.lt_succ_self t)
-    unfold sel
-    split_ifs
-    · exact recov_block hA (gs t) (blockXor gs c t) t hb hin
-    · exact recov_block_compl hA (gs t) (blockXor gs c t) t hb hin
+/-- First step of the run on an XOR whose remainder `h` is not exactly balanced: the majority step
+on the outer block leaves `A × sel h`, for the target and for its complement. -/
+lemma first_step (g : Finset A) {t : ℕ} (h : Finset (Rows A t))
+    (hb : 2 * h.card ≠ Fintype.card (Rows A t)) :
+    majStep (coord (t + 1) ⟨0, by omega⟩) (Fintype.card A ^ t) (xorTarget g h)
+      = (univ : Finset A) ×ˢ sel h ∧
+    majStep (coord (t + 1) ⟨0, by omega⟩) (Fintype.card A ^ t) (univ \ xorTarget g h)
+      = (univ : Finset A) ×ˢ sel h := by
+  have hc : coord (A := A) (t + 1) ⟨0, by omega⟩ = Prod.fst := rfl
+  rw [hc, ← card_rows]
+  have hle := card_le_univ h
+  have key : ∀ h' : Finset (Rows A t), 2 * h'.card ≠ Fintype.card (Rows A t) →
+      majStep Prod.fst (Fintype.card (Rows A t)) (xorTarget g h') = (univ : Finset A) ×ˢ sel h' := by
+    intro h' hb'
+    unfold majStep
+    rcases lt_or_gt_of_ne hb' with hlt | hgt
+    · rw [(block_step_lt g h' hlt).1, (block_step_lt g h' hlt).2.1]; simp [sel, hlt]
+    · rw [(block_step_gt g h' hgt).1, (block_step_gt g h' hgt).2.1]
+      simp [sel, show ¬ 2 * h'.card < Fintype.card (Rows A t) by omega]
+  refine ⟨key h hb, ?_⟩
+  rw [compl_xorTarget, key (univ \ h) (by rw [card_compl]; omega)]
+  congr 1; unfold sel; rw [card_compl]
+  rcases lt_or_gt_of_ne hb with hlt | hgt
+  · rw [if_neg (by omega), if_pos hlt]; ext y; simp
+  · rw [if_pos (by omega), if_neg (by omega)]
 
-/-- Theorem `dichotomy` (b): an XOR of `t ≥ 1` blocks on disjoint inputs (`c = false`), with no
-exactly balanced remainder, is recovered by exactly `t` majority steps, the `j`-th on block `j`
-(counted from the outside). -/
-theorem recov_blockXor (hA : 0 < Fintype.card A) (gs : ℕ → Finset A) (c : Bool) (t : ℕ)
-    (hu : Unbalanced gs c (t + 1)) : RecovIn (blockXor gs c (t + 1)) (t + 1) :=
-  recov_block hA (gs t) (blockXor gs c t) t (hu t (Nat.lt_succ_self t))
-    (recov_sel_blockXor hA gs c t (fun j hj => hu j (Nat.lt_succ_of_lt hj)))
+/-- The run clears the low-density version of a block XOR in exactly `t` steps. -/
+theorem runSteps_sel (hA : 0 < Fintype.card A) (gs : ℕ → Finset A) (c : Bool) :
+    ∀ t, Unbalanced gs c t → runSteps t 0 t (sel (blockXor gs c t)) = ∅
+  | 0, _ => by rw [sel_blockXor_zero]; rfl
+  | t + 1, hu => by
+    have hb := hu t (Nat.lt_succ_self t)
+    have ih := runSteps_sel hA gs c t (fun j hj => hu j (Nat.lt_succ_of_lt hj))
+    have hs := first_step (gs t) (blockXor gs c t) hb
+    unfold runSteps; rw [dif_pos (by omega)]
+    show runSteps (t + 1) 1 t (majStep _ _ (sel (xorTarget (gs t) (blockXor gs c t)))) = ∅
+    simp only [Nat.add_sub_cancel]
+    unfold sel; split_ifs
+    · rw [hs.1, runSteps_lift hA, ih]; simp
+    · rw [hs.2, runSteps_lift hA, ih]; simp
+
+/-- Theorem `dichotomy` (b): for an XOR of `t ≥ 1` blocks on disjoint inputs (plus a constant),
+with no exactly balanced remainder, the majority steps on blocks `0, 1, …, t−1`, in this order,
+reach the zero residual in exactly `t` steps. The intermediate residuals are given by
+`first_step`: after the step on a block, the residual is the low-density version of the XOR of the
+remaining blocks, constant along the processed ones. -/
+theorem runSteps_blockXor (hA : 0 < Fintype.card A) (gs : ℕ → Finset A) (c : Bool) (t : ℕ)
+    (hu : Unbalanced gs c (t + 1)) : runSteps (t + 1) 0 (t + 1) (blockXor gs c (t + 1)) = ∅ := by
+  have hb := hu t (Nat.lt_succ_self t)
+  have ih := runSteps_sel hA gs c t (fun j hj => hu j (Nat.lt_succ_of_lt hj))
+  unfold runSteps; rw [dif_pos (by omega)]
+  show runSteps (t + 1) 1 t (majStep _ _ (xorTarget (gs t) (blockXor gs c t))) = ∅
+  simp only [Nat.add_sub_cancel]
+  rw [(first_step (gs t) (blockXor gs c t) hb).1, runSteps_lift hA, ih]; simp
+
+/-! ### Extra inputs ignored by the target (`n > t k`). -/
+
+section Extra
+variable {E : Type} [Fintype E] [DecidableEq E]
+
+/-- The same run on `E × Rows A t`: step `d` on block `d`, fibers of size `|E| · |A|^{t−1}`. -/
+def runStepsE (t : ℕ) : ℕ → ℕ → Finset (E × Rows A t) → Finset (E × Rows A t)
+  | _, 0, R => R
+  | d, k + 1, R =>
+    if h : d < t then runStepsE t (d + 1) k
+      (majStep (fun p : E × Rows A t => coord t ⟨d, h⟩ p.2)
+        (Fintype.card E * Fintype.card A ^ (t - 1)) R)
+    else R
+
+lemma runStepsE_eq (hE : 0 < Fintype.card E) (t : ℕ) :
+    ∀ (k d : ℕ) (R : Finset (Rows A t)),
+      runStepsE t d k ((univ : Finset E) ×ˢ R) = (univ : Finset E) ×ˢ runSteps t d k R
+  | 0, d, R => by simp [runStepsE, runSteps]
+  | k + 1, d, R => by
+    unfold runStepsE runSteps
+    by_cases h : d < t
+    · rw [dif_pos h, dif_pos h, majStep_lift hE]; exact runStepsE_eq hE t k (d + 1) _
+    · rw [dif_neg h, dif_neg h]
+
+/-- Theorem `dichotomy` (b) with inputs outside the blocks: the target ignores `E`; the same
+`t` block steps reach zero. -/
+theorem runStepsE_blockXor (hE : 0 < Fintype.card E) (hA : 0 < Fintype.card A)
+    (gs : ℕ → Finset A) (c : Bool) (t : ℕ) (hu : Unbalanced gs c (t + 1)) :
+    runStepsE (t + 1) 0 (t + 1) ((univ : Finset E) ×ˢ blockXor gs c (t + 1)) = ∅ := by
+  rw [runStepsE_eq hE, runSteps_blockXor hA gs c t hu]; simp
+
+end Extra
 
 end Llrg

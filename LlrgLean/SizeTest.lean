@@ -11,6 +11,7 @@ Guarantee: the output is exact, and its size never exceeds `L(Y)`, the size of t
 strictly so if a step was accepted.
 -/
 import LlrgLean.Refinement
+import LlrgLean.Marginals
 
 open scoped symmDiff
 open Finset
@@ -174,5 +175,47 @@ theorem project_exact (L : Finset Cell → ℕ) (propose : Finset Cell → List 
       rw [project_exact L propose T (p :: cs) (R ∆ p.1)]
       simp only [List.map_cons, xorAll]
       ext x; simp only [Finset.mem_symmDiff]; tauto
+
+end Llrg
+
+namespace Llrg
+
+variable {ρ Z : Type*} [Fintype ρ] [DecidableEq ρ] [Fintype Z] [DecidableEq Z] {m : ℕ}
+
+/-- Rows of output column `j` that are set in `R`. -/
+def rowsOf (R : Finset (ρ × Fin m)) (j : Fin m) : Finset ρ := univ.filter (fun r => (r, j) ∈ R)
+
+/-- The majority correction of Algorithm 2 on cells: for each selected output column `j ∈ O`, the
+rows over the majority-set fibers of that column's residual. -/
+def majCorr (π : ρ → Z) (F : ℕ) (O : Finset (Fin m)) (R : Finset (ρ × Fin m)) :
+    Finset (ρ × Fin m) :=
+  univ.filter (fun p => p.2 ∈ O ∧ π p.1 ∈ majSet π F (rowsOf R p.2))
+
+/-- The majority correction touches only columns whose residual is non-empty: the hypothesis
+`hprop` of `project_le_fallback` holds for the majority operator. -/
+theorem majCorr_touched (π : ρ → Z) (F : ℕ) (O : Finset (Fin m)) (R : Finset (ρ × Fin m)) :
+    ∀ j ∈ touched (majCorr π F O R), (col R j).Nonempty := by
+  intro j hj
+  simp only [touched, mem_filter, mem_univ, true_and] at hj
+  obtain ⟨p, hp⟩ := hj
+  simp only [col, majCorr, mem_filter, mem_univ, true_and] at hp
+  obtain ⟨⟨_, hmaj⟩, rfl⟩ := hp
+  obtain ⟨r, hr⟩ := nonempty_of_majSet_nonempty π F (rowsOf R p.2) ⟨_, hmaj⟩
+  exact ⟨(r, p.2), by simp only [col, mem_filter]; exact ⟨(mem_filter.mp hr).2, trivial⟩⟩
+
+/-- `project_le_fallback` for a proposer that only proposes majority corrections (any family of
+bound sets `π i`, fiber sizes, column sets, circuit sizes and order). -/
+theorem project_le_fallback_maj {ι : Type*} (L : Finset (ρ × Fin m) → ℕ)
+    (π : ι → ρ → Z) (F : ι → ℕ) (O : ι → Finset (Fin m))
+    (propose : Finset (ρ × Fin m) → List (Finset (ρ × Fin m) × ℕ))
+    (hmaj : ∀ R, ∀ p ∈ propose R, ∃ i, p.1 = majCorr (π i) (F i) (O i) R)
+    (T : ℕ) (Y : Finset (ρ × Fin m)) :
+    total L (project L propose T [] Y).1 (project L propose T [] Y).2 ≤ L Y ∧
+    ((project L propose T [] Y).1 ≠ [] →
+      total L (project L propose T [] Y).1 (project L propose T [] Y).2 < L Y) := by
+  refine project_le_fallback L propose (fun R p hp j hj => ?_) T Y
+  obtain ⟨i, hi⟩ := hmaj R p hp
+  rw [hi] at hj
+  exact majCorr_touched (π i) (F i) (O i) R j hj
 
 end Llrg

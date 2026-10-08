@@ -149,3 +149,18 @@ theorem all_G5_of_all_G3 (h4 : ∀ f : BFun 4, G 4 3 f) (f : BFun 5) : G 5 5 f :
   exact G_embed (by norm_num) (h4 g0)
 
 end Llrg
+
+namespace Llrg
+
+open Classical in
+/-- Appendix H: outputs are drawn independently, so the number of `m`-output functions of `N`
+inputs whose every output is in `G_q(N)` is `|G_q(N)|^m`. -/
+theorem card_multi_output_G (N q m : ℕ) :
+    (univ.filter (fun F : Fin m → BFun N => ∀ j, G N q (F j))).card
+      = (univ.filter (fun f : BFun N => G N q f)).card ^ m := by
+  rw [show univ.filter (fun F : Fin m → BFun N => ∀ j, G N q (F j))
+      = Fintype.piFinset (fun _ : Fin m => univ.filter (fun f : BFun N => G N q f)) by
+    ext F; simp [Fintype.mem_piFinset]]
+  rw [Fintype.card_piFinset]; simp
+
+end Llrg

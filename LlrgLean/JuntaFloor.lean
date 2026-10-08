@@ -88,3 +88,42 @@ theorem residual_floor (k : ℕ) (R₀ : (Fin n → Bool) → ZMod 2)
   exact ⟨⟨cs.sum, hsum, rfl⟩, fun d hd => hd cs.sum hsum⟩
 
 end Llrg
+
+namespace Llrg
+
+variable {n : ℕ}
+
+/-- A correction of the projection loop, `x ↦ g(x|_S)`, is a junta on `S`. -/
+theorem proj_junta (S : Finset (Fin n)) (g : ({i // i ∈ S} → Bool) → ZMod 2) :
+    IsJuntaOn S (fun x => g (fun i => x i.1)) := by
+  intro x y h
+  show g (fun i => x i.1) = g (fun i => y i.1)
+  rw [show (fun i : {i // i ∈ S} => x i.1) = (fun i => y i.1) from funext (fun i => h i.1 i.2)]
+
+lemma rmEval_eq_sum (a : Finset (Fin n) → ZMod 2) :
+    rmEval a = ∑ S : Finset (Fin n), (fun x => a S * mono S x) := by
+  funext x; simp [rmEval, Finset.sum_apply]
+
+/-- Remark `rm_floor` (i), converse: every element of `RM(k, n)` is an XOR of `k`-juntas; together
+with `junta_mem_RM` and `RM_add`, `RM(k, n)` is exactly the span of the `k`-juntas. -/
+theorem RM_is_sum_of_juntas (k : ℕ) (f : (Fin n → Bool) → ZMod 2) (hf : f ∈ RM k) :
+    ∃ cs : List ((Fin n → Bool) → ZMod 2),
+      (∀ c ∈ cs, ∃ S : Finset (Fin n), S.card ≤ k ∧ IsJuntaOn S c) ∧ f = cs.sum := by
+  classical
+  let Ss := ((univ : Finset (Finset (Fin n))).filter (fun S => S.card ≤ k)).toList
+  refine ⟨Ss.map (fun S x => rmCoef f S * mono S x), ?_, ?_⟩
+  · intro c hc
+    obtain ⟨S, hS, rfl⟩ := List.mem_map.mp hc
+    refine ⟨S, (mem_filter.mp (Finset.mem_toList.mp hS)).2, ?_⟩
+    intro x y h; simp only; rw [mono_junta S x y h]
+  · rw [Finset.sum_map_toList]
+    conv_lhs => rw [← rmEval_rmCoef f, rmEval_eq_sum]
+    rw [← Finset.sum_filter_add_sum_filter_not univ (fun S => S.card ≤ k)]
+    have hz : ∑ S ∈ (univ : Finset (Finset (Fin n))).filter (fun S => ¬ S.card ≤ k),
+        (fun x => rmCoef f S * mono S x) = 0 := by
+      refine sum_eq_zero (fun S hS => ?_)
+      have : k < S.card := by simp only [mem_filter, mem_univ, true_and, not_le] at hS; exact hS
+      funext x; simp [hf S this]
+    rw [hz, add_zero]
+
+end Llrg

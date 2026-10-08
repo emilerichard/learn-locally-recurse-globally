@@ -69,3 +69,20 @@ theorem resid_empty_of_steps (g : Finset C) (h : ℕ → Finset C)
   exact Finset.card_eq_zero.mp (by omega)
 
 end Llrg
+
+namespace Llrg
+
+variable {C : Type*} [DecidableEq C]
+
+/-- Proposition 2.1, exact synthesis: if every step taken while the residual is non-zero strictly
+decreases its weight, the residual reaches zero within `‖g‖₁` steps (`≤ card C = m · 2^n`). -/
+theorem resid_reaches_zero (g : Finset C) (h : ℕ → Finset C)
+    (hdec : ∀ t, resid g h t ≠ ∅ → (resid g h (t + 1)).card < (resid g h t).card) :
+    ∃ T ≤ g.card, resid g h T = ∅ := by
+  by_contra hne
+  push_neg at hne
+  have := steps_le_weight g h (g.card + 1)
+    (fun t ht => hdec t (Finset.nonempty_iff_ne_empty.mp (hne t (by omega))))
+  omega
+
+end Llrg

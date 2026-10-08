@@ -170,3 +170,71 @@ theorem nonempty_of_majSet_nonempty (π : X → Z) (F : ℕ) (R : Finset X)
   exact ⟨x, (mem_filter.mp hx).1⟩
 
 end Llrg
+
+namespace Llrg
+
+variable {X Z : Type*} [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
+
+/-- With uniform fibers, `|Z| · F = |X|` (`= 2^n`). -/
+theorem card_Z_mul_F (π : X → Z) (F : ℕ) (hF : UniformFibers π F) :
+    Fintype.card Z * F = Fintype.card X := by
+  have := card_overSet π F hF univ
+  rw [show overSet π univ = univ by ext x; simp [overSet], card_univ, card_univ] at this
+  omega
+
+lemma W_le_F (π : X → Z) (F : ℕ) (hF : UniformFibers π F) (R : Finset X) (z : Z) :
+    W π R z ≤ F := by
+  rw [← hF z]; unfold W; exact card_le_card (filter_subset_filter _ (subset_univ R))
+
+/-- `β_S ∈ [0, 1]`: `0 ≤ 2^n β_S ≤ 2^n`. -/
+theorem betaSum_bounds (π : X → Z) (F : ℕ) (hF : UniformFibers π F) (R : Finset X) :
+    0 ≤ betaSum π F R ∧ betaSum π F R ≤ Fintype.card Z * F := by
+  refine ⟨sum_nonneg (fun z _ => abs_nonneg _), ?_⟩
+  have : ∀ z, |2 * (W π R z : ℤ) - F| ≤ F := fun z => by
+    have := W_le_F π F hF R z; rw [abs_le]; constructor <;> push_cast <;> omega
+  calc betaSum π F R ≤ ∑ _z : Z, (F : ℤ) := sum_le_sum (fun z _ => this z)
+    _ = Fintype.card Z * F := by simp
+
+/-- `β_S = 1` iff the residual is a union of fibers, i.e. an `S`-junta. -/
+theorem betaSum_eq_iff (π : X → Z) (F : ℕ) (hF : UniformFibers π F) (R : Finset X) :
+    betaSum π F R = Fintype.card Z * F ↔ ∀ z, W π R z = 0 ∨ W π R z = F := by
+  have hle : ∀ z, |2 * (W π R z : ℤ) - F| ≤ F := fun z => by
+    have := W_le_F π F hF R z; rw [abs_le]; constructor <;> push_cast <;> omega
+  have hsum : (Fintype.card Z * F : ℤ) = ∑ _z : Z, (F : ℤ) := by simp
+  rw [betaSum, hsum]
+  constructor
+  · intro h z
+    have := (sum_eq_sum_iff_of_le (fun z _ => hle z)).mp h z (mem_univ z)
+    have hW := W_le_F π F hF R z
+    rcases abs_eq (Int.natCast_nonneg F) |>.mp this with h1 | h1 <;> [right; left] <;> omega
+  · intro h; refine sum_congr rfl (fun z _ => ?_)
+    rcases h z with h0 | h0
+    · rw [h0]; simp
+    · rw [h0, show (2 * (F : ℤ) - F) = F by ring]; exact abs_of_nonneg (by positivity)
+
+/-- The majority marginal is the weight-minimizing correction for a fixed bound set: flipping any
+set of fibers leaves at least as many cells as flipping the majority-set fibers. -/
+theorem maj_optimal (π : X → Z) (F : ℕ) (hF : UniformFibers π F) (R : Finset X) (Z' : Finset Z) :
+    (R ∆ overSet π (majSet π F R)).card ≤ (R ∆ overSet π Z').card := by
+  have h1 := card_flip π F hF R (majSet π F R)
+  have h2 := card_flip π F hF R Z'
+  suffices hs : ∑ z ∈ majSet π F R, ((F : ℤ) - 2 * W π R z) ≤ ∑ z ∈ Z', ((F : ℤ) - 2 * W π R z) by
+    have : ((R ∆ overSet π (majSet π F R)).card : ℤ) ≤ (R ∆ overSet π Z').card := by
+      rw [h1, h2]; linarith
+    exact_mod_cast this
+  rw [← sum_filter_add_sum_filter_not Z' (fun z => z ∈ majSet π F R)]
+  have hneg : ∀ z ∈ Z'.filter (fun z => z ∉ majSet π F R), 0 ≤ ((F : ℤ) - 2 * W π R z) := by
+    intro z hz
+    simp only [mem_filter, majSet, mem_univ, true_and, not_lt] at hz; omega
+  have hpos : ∑ z ∈ majSet π F R, ((F : ℤ) - 2 * W π R z)
+      ≤ ∑ z ∈ Z'.filter (fun z => z ∈ majSet π F R), ((F : ℤ) - 2 * W π R z) := by
+    rw [← sum_filter_add_sum_filter_not (majSet π F R) (fun z => z ∈ Z')]
+    have : ∑ z ∈ (majSet π F R).filter (fun z => z ∉ Z'), ((F : ℤ) - 2 * W π R z) ≤ 0 :=
+      sum_nonpos (fun z hz => by
+        simp only [mem_filter, majSet, mem_univ, true_and] at hz; omega)
+    have heq : (majSet π F R).filter (fun z => z ∈ Z') = Z'.filter (fun z => z ∈ majSet π F R) := by
+      ext z; simp [and_comm]
+    rw [heq]; linarith
+  linarith [sum_nonneg hneg]
+
+end Llrg
