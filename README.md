@@ -20,7 +20,7 @@ is cardinality. A projection onto a bound set is any map `π : X → Z` with fib
 | App. B: flipping fibers changes the weight by `Σ (F − 2W_z)`; `Δw_par`; `Δw_maj = −Σ max(2W_z − F, 0)`; the majority marginal is the weight-minimizing correction for a fixed bound set | `card_flip`, `delta_par`, `card_after_maj`, `gain_eq_sum_max`, `maj_optimal` | `Marginals.lean` |
 | Prop. `zero_drift` (ii): even fiber weights ⇒ parity marginal is a no-op | `par_noop` | `Marginals.lean` |
 | Prop. `zero_drift` (i): for a bound set chosen independently of `R` with `k < n` (fibers of even size), and a distribution of `R` invariant under complementation (in particular uniform), `E[Δw_par] = 0` | `zero_drift`, `zero_drift_uniform`, `dPar_compl` | `ZeroDrift.lean` |
-| Prop. `convergence_rate`: (C1)–(C2) ⇒ `E[w_{t+1}] ≤ 2ε₀ w_t`; `E[w_t] ≤ (2ε₀)^t w_0`; Markov `P(w_t ≠ 0) ≤ E[w_t]`; expected number of iterations with non-zero residual ≤ `⌈log(m 2^n)/log(1/(2ε₀))⌉ + 1/(1−2ε₀)` (any horizon) | `one_step`, `iterate_contraction`, `prob_ne_zero_le`, `tail_sum`, `expected_iterations` | `Convergence.lean` |
+| Prop. `convergence_rate`: (C1)–(C2) ⇒ `E[w_{t+1}] ≤ 2ε₀ w_t` (one step, in expectation; the unconditional recursion `E[w_{t+1}] ≤ 2ε₀ E[w_t]` is assumed for the iteration, the tower step from the conditional form is not formalized; `ε₀ > 0`); `E[w_t] ≤ (2ε₀)^t w_0`; Markov `P(w_t ≠ 0) ≤ E[w_t]`; expected number of iterations with non-zero residual ≤ `⌈log(m 2^n)/log(1/(2ε₀))⌉ + 1/(1−2ε₀)` (any horizon) | `one_step`, `iterate_contraction`, `prob_ne_zero_le`, `tail_sum`, `expected_iterations` | `Convergence.lean` |
 | Prop. `gain` and its proof: `gain = w − 2^{n−1}(1−β_S)`; `δ' = (1−β_S)/2`; progress iff `β_S > 1−2δ`; max gain ⇔ max `β`; `β_S ∈ [0,1]`; `β_S = 1` iff `R` is an `S`-junta; `|Z|·F = 2^n` | `two_gain`, `card_after_maj_beta`, `progress_iff`, `gain_le_iff`, `betaSum_bounds`, `betaSum_eq_iff`, `card_Z_mul_F` (integer forms: `betaSum = 2^n β_S`) | `Marginals.lean` |
 | Thm. `dichotomy` (a): weight ≤ F/2 ⇒ no progress; a minterm is a fixed point | `no_progress_of_small`, `minterm_fixed` | `Reachability.lean` |
 | Thm. `dichotomy` (b), one step, both cases and the balanced case (**corrected gain for μ > 1/2**) | `block_step_lt`, `block_step_gt`, `block_step_eq` | `Reachability.lean` |
@@ -34,7 +34,9 @@ is cardinality. A projection onto a bound set is any map `π : X → Z` with fib
 
 Not formalized (computational or out of scope):
 - the size `|G_2(5)| = 15025` and the lower bound on `|G_3(5)|` (computed by closure, cross-checked
-  against the corpora);
+  against the corpora); the other entries of Table `tab:class_single` (`|G_1(n)| = 7, 17, 32, 65`,
+  `|G_2(2)| = |G_3(2)| = 16`, `|G_3(3)| = 256`) and the corpus statistics of Table `tab:class_multi`
+  and of the Validation paragraph (empirical);
 - the asymptotic part of Remark `rm_floor`; the Fourier form of App. F; the Dyck completion
   theorem; the remarks on the parity marginal after Thm. `dichotomy`;
 - the closed-form size `L` of App. B itself: the guarantees hold for any completion cost `L` and any
