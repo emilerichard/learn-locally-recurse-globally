@@ -12,8 +12,8 @@ errors; an outer loop, **XOR residual refinement**, calls the same model on the 
 (the cells that are still wrong) and XORs the corrections, which makes the result exact.
 
 This repository contains the trained weights, a minimal inference implementation, the outer
-loop, a few test samples and a demo notebook. It does not contain training or data
-generation code.
+loop, a few test samples, a demo notebook, and Lean 4 proofs of the paper's theoretical
+results ([`llrg-lean/`](llrg-lean/)). It does not contain training or data generation code.
 
 ## Contents
 
@@ -29,6 +29,7 @@ samples/       samples.json: test circuits (shallow and deep) with their truth t
 assets/        figures used by the notebooks
 notebooks/     00_basics.ipynb (circuits, truth tables, tokens; model architecture)
                demo.ipynb (one-shot inference and the outer loop on test circuits)
+llrg-lean/     Lean 4 / Mathlib proofs of the paper's propositions and theorems
 ```
 
 ## Quick start
@@ -50,6 +51,20 @@ Y = C.evaluate(C.parse('( 0 ⊻ 1 ) ∧ ( 2 ∨ ~ 3 )\n~ ( 0 ∨ 3 )'), n=4)   #
 outs, pred, ids = H.one_shot(model, Y)          # one forward pass
 res = H.xor_refine(model, Y)                    # outer loop; res['outputs'] is exact
 print([C.pretty(o) for o in res['outputs']])
+```
+
+## Lean proofs
+
+[`llrg-lean/`](llrg-lean/) is a Lean 4 / Mathlib project that checks the paper's mathematical claims: the
+XOR residual decomposition, termination and exactness of both outer loops for any model, the
+convergence rate, the parity and majority marginals, the reachability theorem, the Reed-Muller
+floor, the generator's class sizes, and the Dyck completion theorem. Its
+[README](llrg-lean/README.md) maps each claim of the paper to the Lean theorem that proves it and
+lists what is not formalized. There is no `sorry`. To build:
+
+```bash
+cd llrg-lean
+lake exe cache get && lake build
 ```
 
 ## Circuit format

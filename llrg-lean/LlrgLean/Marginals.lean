@@ -1,5 +1,5 @@
 /-
-Projection marginals (Appendix B and F): fibers, the effect of flipping fibers, the parity and
+Projection marginals (Appendix B and D): fibers, the effect of flipping fibers, the parity and
 majority marginals, and Proposition `gain` (progress criterion for the majority marginal).
 
 Rows are a finite type `X`; the projection onto a bound set is any map `π : X → Z` whose fibers

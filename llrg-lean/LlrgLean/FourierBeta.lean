@@ -1,5 +1,5 @@
 /-
-Appendix F, Fourier form of the fiber imbalance: `β_S = ‖P_S f‖₁ ≤ ‖P_S f‖₂ =
+Appendix D, Fourier form of the fiber imbalance: `β_S = ‖P_S f‖₁ ≤ ‖P_S f‖₂ =
 (Σ_{T ⊆ S} f̂(T)²)^{1/2}` for `f = (−1)^R`, and `β_S = 0` for every `|S| = k` iff `f̂(T) = 0` for
 every `|T| ≤ k`. Walsh characters on `{0,1}^n`, orthogonality, Fourier expansion, the averaging
 operator `P_S` and Parseval are developed here.

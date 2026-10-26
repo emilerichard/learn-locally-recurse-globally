@@ -1,5 +1,5 @@
 /-
-Appendix H: the generator's depth-`q` classes `G_q(N)`.
+Appendix F: the generator's depth-`q` classes `G_q(N)`.
 Depth-1 gates take distinct inputs (bare inputs occur at depth 1 only when `N < 4`, through draws
 with replacement); deeper gates take independently drawn operands of depth `q − 1`.
 -/
@@ -137,7 +137,7 @@ theorem G_embed (hN : 4 ≤ N) {q : ℕ} {f : BFun N} (h : G N q f) :
     convert this using 1; funext x; simp [List.any_map, Function.comp_def]
   | xor q f g _ _ ihf ihg => exact G.xor q _ _ ihf ihg
 
-/-- Appendix H: if every function of `4` inputs has depth at most `3` (computed: `|G_3(4)| = 2^16`),
+/-- Appendix F: if every function of `4` inputs has depth at most `3` (computed: `|G_3(4)| = 2^16`),
 then every function of `5` inputs has depth at most `5`. -/
 theorem all_G5_of_all_G3 (h4 : ∀ f : BFun 4, G 4 3 f) (f : BFun 5) : G 5 5 f := by
   refine shannon_step (N := 4) 3 (fun g hg => ?_) last_var_G3.1 last_var_G3.2 f
@@ -153,7 +153,7 @@ end Llrg
 namespace Llrg
 
 open Classical in
-/-- Appendix H: outputs are drawn independently, so the number of `m`-output functions of `N`
+/-- Appendix F: outputs are drawn independently, so the number of `m`-output functions of `N`
 inputs whose every output is in `G_q(N)` is `|G_q(N)|^m`. -/
 theorem card_multi_output_G (N q m : ℕ) :
     (univ.filter (fun F : Fin m → BFun N => ∀ j, G N q (F j))).card

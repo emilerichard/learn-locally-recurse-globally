@@ -1,5 +1,5 @@
 /-
-Appendix H: every function of 4 inputs is in `G_3(4)`, by a certificate checked by the kernel.
+Appendix F: every function of 4 inputs is in `G_3(4)`, by a certificate checked by the kernel.
 For each of the `2^16` truth tables `c`, the certificate gives a depth-3 witness: either `c = a ⊕ b`
 with `a, b ∈ G_2(4)`, or `c` is an AND (resp. OR) of at most four elements of `G_2(4)`. Membership
 in `G_2(4)` is the bitmap `g2map 4`, proved equal to the literal `B4` by kernel computation, and

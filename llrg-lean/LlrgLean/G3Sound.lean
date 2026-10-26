@@ -1,5 +1,5 @@
 /-
-Appendix H: `G_3(4)` contains every function of 4 inputs, and every function of 5 inputs is in
+Appendix F: `G_3(4)` contains every function of 4 inputs, and every function of 5 inputs is in
 `G_5(5)`, from the kernel-checked certificate `cert_ok`.
 -/
 import LlrgLean.G3Cert
@@ -54,14 +54,14 @@ theorem G3_of_chk {c w : ℕ} (hc : c < 2 ^ 16) (h : chk B4 c w = true) : G 4 3 
     convert this using 1; funext x
     rw [← he]; simp [decode_or', Bool.or_assoc]
 
-/-- Appendix H: every function of 4 inputs has depth at most 3 (`|G_3(4)| = 2^16`). -/
+/-- Appendix F: every function of 4 inputs has depth at most 3 (`|G_3(4)| = 2^16`). -/
 theorem all_G3_4 (f : BFun 4) : G 4 3 f := by
   have hc : code f < 2 ^ 16 := by simpa [K] using code_lt f
   obtain ⟨w, hw⟩ := cert_all (code f) hc
   have := G3_of_chk hc hw
   rwa [decode_code idxFacts4] at this
 
-/-- Appendix H: every function of 5 inputs has depth at most 5. -/
+/-- Appendix F: every function of 5 inputs has depth at most 5. -/
 theorem all_G5_5 (f : BFun 5) : G 5 5 f := all_G5_of_all_G3 all_G3_4 f
 
 end Llrg.Count

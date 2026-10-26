@@ -1,5 +1,5 @@
 /-
-Appendix H, computed class sizes, checked by the Lean kernel: `|G_2(3)| = 133`, `|G_2(4)| = 1078`,
+Appendix F, computed class sizes, checked by the Lean kernel: `|G_2(3)| = 133`, `|G_2(4)| = 1078`,
 `G_3(4)` = all `2^16` functions (hence every 5-input function is in `G_5(5)`).
 
 Truth tables are natural numbers: bit `r` of the code of `f` is `f` on the input whose bit `i`
@@ -443,12 +443,12 @@ theorem g2_count3 : (bitsOf (K 3) (g2map 3)).length = 133 := by decide +kernel
 theorem g2_count4 : (bitsOf (K 4) (g2map 4)).length = 1078 := by decide +kernel
 
 open Classical in
-/-- Appendix H: `|G_2(3)| = 133`. -/
+/-- Appendix F: `|G_2(3)| = 133`. -/
 theorem card_G2_3 : (univ.filter (fun f : BFun 3 => G 3 2 f)).card = 133 := by
   rw [card_of_spec idxFacts3 idxSurj3 _ (g2map 3) (G2_iff idxFacts3), g2_count3]
 
 open Classical in
-/-- Appendix H: `|G_2(4)| = 1078`. -/
+/-- Appendix F: `|G_2(4)| = 1078`. -/
 theorem card_G2_4 : (univ.filter (fun f : BFun 4 => G 4 2 f)).card = 1078 := by
   rw [card_of_spec idxFacts4 idxSurj4 _ (g2map 4) (G2_iff idxFacts4), g2_count4]
 
