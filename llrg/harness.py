@@ -27,7 +27,7 @@ def one_shot(model, Y):
         return None, None, ids
 
 
-def xor_refine(model, Y, max_steps=10, mask_budget=20, seed=0, verbose=False):
+def xor_refine(model, Y, max_steps=30, mask_budget=20, seed=0, verbose=False):
     """XOR residual refinement with mask retries and SOP completion.
 
     Returns a dict with the final circuit ('outputs'), the per-step history and whether the

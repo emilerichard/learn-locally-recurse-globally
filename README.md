@@ -12,8 +12,11 @@ errors; an outer loop, **XOR residual refinement**, calls the same model on the 
 (the cells that are still wrong) and XORs the corrections, which makes the result exact.
 
 This repository contains the trained weights, a minimal inference implementation, the outer
-loop, a few test samples, a demo notebook, and Lean 4 proofs of the paper's theoretical
-results ([`llrg-lean/`](llrg-lean/)). It does not contain training or data generation code.
+loop, a few test samples, demo notebooks, a small random-circuit generator for building your
+own test sets, and Lean 4 proofs of the paper's theoretical results
+([`llrg-lean/`](llrg-lean/)). It does not contain training code or the generator of the
+paper's training and test corpora; `llrg/generate.py` is a separate toy with a different
+distribution.
 
 ## Contents
 
@@ -22,6 +25,7 @@ llrg/
   model.py     inference-only model (truth-table encoder + GPT-2 decoder), greedy decoding
   circuit.py   circuit parser, evaluator, size/depth, sum-of-products, drawing
   harness.py   one-shot inference and XOR residual refinement (Algorithm 1 of the paper)
+  generate.py  toy random-circuit generator: choose inputs, outputs, depth and gate count
   vocab.py     the 16-token circuit vocabulary
   viz.py       truth-table plots
 weights/       model.pt (state dict) and config.json
@@ -29,6 +33,7 @@ samples/       samples.json: test circuits (shallow and deep) with their truth t
 assets/        figures used by the notebooks
 notebooks/     00_basics.ipynb (circuits, truth tables, tokens; model architecture)
                demo.ipynb (one-shot inference and the outer loop on test circuits)
+               make_your_own.ipynb (generate circuits and test sets, plug in your own model)
 llrg-lean/     Lean 4 / Mathlib proofs of the paper's propositions and theorems
 ```
 

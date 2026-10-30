@@ -4,3 +4,4 @@ __pycache__/
 .venv/
 .DS_Store
 llrg-lean/.lake/
+notebooks/my_test_set.json

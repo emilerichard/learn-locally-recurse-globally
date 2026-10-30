@@ -2,6 +2,6 @@
 "Learn Locally, Recurse Globally: Neural Circuit Synthesis Beyond Training Depth".
 """
 from .model import CircuitSynthesizer
-from . import circuit, harness, vocab
+from . import circuit, generate, harness, vocab
 
-__all__ = ['CircuitSynthesizer', 'circuit', 'harness', 'vocab']
+__all__ = ['CircuitSynthesizer', 'circuit', 'generate', 'harness', 'vocab']

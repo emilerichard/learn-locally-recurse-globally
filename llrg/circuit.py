@@ -154,8 +154,38 @@ def _variables(node):
 
 
 # ----------------------------------------------------------------------------- size
+# Convention of the paper: every non-input node (AND or OR with any number of operands,
+# two-operand XOR, NOT, constant) is one gate, identical sub-circuits are counted once, and
+# the depth of a circuit is the longest input-to-output path over all of its outputs, each
+# gate counting one level (inputs and constants have depth 0).
+
+def _key(node):
+    """Hashable form of an expression tree (identical sub-circuits have the same key)."""
+    kind = node[0]
+    if kind in ('VAR', 'CONST'):
+        return node
+    if kind == 'NOT':
+        return ('NOT', _key(node[1]))
+    return (kind, tuple(_key(c) for c in node[1]))
+
+
+def _gates(node, seen):
+    kind = node[0]
+    if kind == 'VAR':
+        return
+    k = _key(node)
+    if k in seen:
+        return
+    seen.add(k)
+    if kind == 'NOT':
+        _gates(node[1], seen)
+    elif kind != 'CONST':
+        for c in node[1]:
+            _gates(c, seen)
+
+
 def depth(node):
-    """Number of gate levels; an n-ary gate or a NOT counts as one level."""
+    """Depth of one output: number of gates on its longest input-to-output path."""
     kind = node[0]
     if kind in ('VAR', 'CONST'):
         return 0
@@ -165,19 +195,28 @@ def depth(node):
 
 
 def gate_count(node):
-    """Number of two-input gates plus NOT gates (an n-input gate counts as n-1)."""
-    kind = node[0]
-    if kind in ('VAR', 'CONST'):
-        return 0
-    if kind == 'NOT':
-        return 1 + gate_count(node[1])
-    return len(node[1]) - 1 + sum(gate_count(c) for c in node[1])
+    """Number of gates of one output (identical sub-circuits counted once)."""
+    seen = set()
+    _gates(node, seen)
+    return len(seen)
+
+
+def circuit_depth(outputs):
+    """Depth of a circuit: the largest depth over all of its outputs."""
+    return max(depth(o) for o in outputs)
+
+
+def circuit_gates(outputs):
+    """Number of gates of a circuit; sub-circuits shared between outputs are counted once."""
+    seen = set()
+    for o in outputs:
+        _gates(o, seen)
+    return len(seen)
 
 
 def stats(outputs):
-    return {'outputs': len(outputs),
-            'gates': sum(gate_count(o) for o in outputs),
-            'depth': max(depth(o) for o in outputs)}
+    return {'outputs': len(outputs), 'gates': circuit_gates(outputs),
+            'depth': circuit_depth(outputs)}
 
 
 # ----------------------------------------------------------------------------- building
