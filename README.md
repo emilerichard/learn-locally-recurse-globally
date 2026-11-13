@@ -1,4 +1,6 @@
-# Learn Locally, Recurse Globally: trained model and demo
+# 🥥 Learn Locally, Recurse Globally: trained model and demo
+
+*Like a coconut: a hard shell (a verified outer loop) around a soft core (a neural model that generalizes locally).*
 
 Inference-only release of the truth-table-to-circuit model from
 
